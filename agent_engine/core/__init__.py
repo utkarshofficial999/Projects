@@ -12,11 +12,12 @@ agent engine depend on:
 - Base types and utilities
 """
 
-from agent_engine.core.config import EngineConfig
+from agent_engine.core.config import EngineConfig, get_config
 from agent_engine.core.logging import setup_logging, get_logger
 
 __all__ = [
     "EngineConfig",
+    "get_config",
     "setup_logging",
     "get_logger",
 ]

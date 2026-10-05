@@ -5,24 +5,22 @@ agent_engine.core.logging
 Centralized structured logging configuration for the Agent Engine.
 
 This module provides:
-- A setup_logging() function to configure the root logger with appropriate
-  handlers, formatters, and log levels
-- A get_logger() helper to obtain named loggers throughout the codebase
-- Support for both human-readable and JSON structured log formats
-- Optional file logging alongside console output
-- Context-aware logging with extra fields
+- A setup_logging() function that configures the root logger with
+  structured output (JSON or human-readable console format)
+- A get_logger() helper that returns a configured logger instance
+- Support for both console and file output
+- Structured JSON logging for production environments
+- Human-readable console logging for development
 
 Usage:
     from agent_engine.core.logging import setup_logging, get_logger
 
     # Initialize logging (call once at application startup)
-    setup_logging(level="INFO", json_format=False)
+    setup_logging(level="INFO", format="console")
 
     # Get a logger for your module
     logger = get_logger(__name__)
-
-    # Log messages
-    logger.info("Engine started", extra={"engine_id": "eng-001"})
+    logger.info("Engine started", extra={"component": "engine"})
 """
 
 from __future__ import annotations
@@ -33,55 +31,28 @@ import sys
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from agent_engine.core.config import LoggingConfig, get_config
+from agent_engine.core.config import LogFormat, LogLevel
 
 
-class StructuredFormatter(logging.Formatter):
+class JSONFormatter(logging.Formatter):
     """
-    Custom logging formatter that supports both human-readable and JSON output.
+    Custom logging formatter that outputs log records as JSON.
 
-    In JSON mode, each log record is serialized as a JSON object with standard
-    fields (timestamp, level, logger, message) plus any extra fields provided
-    via the `extra` parameter.
+    This formatter produces structured JSON log lines suitable for
+    ingestion by log aggregation systems (e.g., ELK, Datadog, CloudWatch).
 
-    In human-readable mode, logs are formatted as:
-        [2024-01-15T10:30:00Z] [INFO] [module.name] message {extra_fields}
+    Each log line is a single JSON object containing:
+    - timestamp: ISO 8601 timestamp with timezone
+    - level: Log level name
+    - logger: Logger name
+    - message: The log message
+    - module: Python module name
+    - function: Python function name
+    - line: Source line number
+    - Any additional 'extra' fields passed to the log call
     """
-
-    def __init__(
-        self,
-        json_format: bool = False,
-        include_timestamp: bool = True,
-        include_context: bool = True,
-    ) -> None:
-        """
-        Initialize the StructuredFormatter.
-
-        Args:
-            json_format: If True, output logs as JSON objects.
-            include_timestamp: If True, include ISO-8601 timestamps.
-            include_context: If True, include extra context fields.
-        """
-        super().__init__()
-        self.json_format = json_format
-        self.include_timestamp = include_timestamp
-        self.include_context = include_context
 
     def format(self, record: logging.LogRecord) -> str:
-        """
-        Format a log record.
-
-        Args:
-            record: The log record to format.
-
-        Returns:
-            str: The formatted log message.
-        """
-        if self.json_format:
-            return self._format_json(record)
-        return self._format_human(record)
-
-    def _format_json(self, record: logging.LogRecord) -> str:
         """
         Format a log record as a JSON string.
 
@@ -89,173 +60,185 @@ class StructuredFormatter(logging.Formatter):
             record: The log record to format.
 
         Returns:
-            str: JSON-formatted log entry.
+            A JSON string representation of the log record.
         """
         log_entry: Dict[str, Any] = {
-            "timestamp": (
-                datetime.fromtimestamp(record.created, tz=timezone.utc)
-                .isoformat()
-                if self.include_timestamp
-                else None
-            ),
+            "timestamp": datetime.fromtimestamp(
+                record.created, tz=timezone.utc
+            ).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
+            "line": record.lineno,
         }
 
-        if self.include_context:
-            # Extract extra fields (excluding standard LogRecord attributes)
-            standard_attrs = {
-                "name", "msg", "args", "levelname", "levelno", "pathname",
-                "filename", "module", "exc_info", "exc_text", "stack_info",
-                "lineno", "funcName", "created", "msecs", "relativeCreated",
-                "thread", "threadName", "processName", "process", "message",
-                "asctime", "taskName",
-            }
-            extra = {
-                k: v for k, v in record.__dict__.items()
-                if k not in standard_attrs and not k.startswith("_")
-            }
-            if extra:
-                log_entry["context"] = extra
-
         # Include exception info if present
-        if record.exc_info and record.exc_info[0] is not None:
+        if record.exc_info:
             log_entry["exception"] = self.formatException(record.exc_info)
 
-        return json.dumps(log_entry, default=str, ensure_ascii=False)
+        # Include any extra fields
+        reserved_attrs = {
+            "name", "msg", "args", "levelname", "levelno", "pathname",
+            "filename", "module", "exc_info", "exc_text", "stack_info",
+            "lineno", "funcName", "created", "msecs", "relativeCreated",
+            "thread", "threadName", "processName", "process", "taskName",
+        }
+        for key, value in record.__dict__.items():
+            if key not in reserved_attrs and not key.startswith("_"):
+                log_entry[key] = value
 
-    def _format_human(self, record: logging.LogRecord) -> str:
+        return json.dumps(log_entry, default=str)
+
+
+class ConsoleFormatter(logging.Formatter):
+    """
+    Human-readable console log formatter.
+
+    Produces colored, aligned log lines suitable for terminal output.
+    Format: [TIMESTAMP] LEVEL (logger) - message
+    """
+
+    # ANSI color codes for log levels
+    COLORS: Dict[str, str] = {
+        "DEBUG": "\033[36m",      # Cyan
+        "INFO": "\033[32m",       # Green
+        "WARNING": "\033[33m",    # Yellow
+        "ERROR": "\033[31m",      # Red
+        "CRITICAL": "\033[35m",   # Magenta
+    }
+    RESET = "\033[0m"
+
+    def __init__(self, use_color: bool = True) -> None:
         """
-        Format a log record in human-readable format.
+        Initialize the console formatter.
+
+        Args:
+            use_color: Whether to use ANSI color codes.
+        """
+        super().__init__(
+            fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        self.use_color = use_color
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format a log record for console output.
 
         Args:
             record: The log record to format.
 
         Returns:
-            str: Human-readable log entry.
+            A formatted string for console display.
         """
-        timestamp = ""
-        if self.include_timestamp:
-            ts = datetime.fromtimestamp(record.created, tz=timezone.utc)
-            timestamp = f"[{ts.isoformat()}] "
-
-        base = f"{timestamp}[{record.levelname}] [{record.name}] {record.getMessage()}"
-
-        if self.include_context:
-            standard_attrs = {
-                "name", "msg", "args", "levelname", "levelno", "pathname",
-                "filename", "module", "exc_info", "exc_text", "stack_info",
-                "lineno", "funcName", "created", "msecs", "relativeCreated",
-                "thread", "threadName", "processName", "process", "message",
-                "asctime", "taskName",
-            }
-            extra = {
-                k: v for k, v in record.__dict__.items()
-                if k not in standard_attrs and not k.startswith("_")
-            }
-            if extra:
-                base += f" {json.dumps(extra, default=str, ensure_ascii=False)}"
-
-        if record.exc_info:
-            base += f"\n{self.formatException(record.exc_info)}"
-
-        return base
+        formatted = super().format(record)
+        if self.use_color:
+            color = self.COLORS.get(record.levelname, self.RESET)
+            formatted = f"{color}{formatted}{self.RESET}"
+        return formatted
 
 
 def setup_logging(
-    level: Optional[str] = None,
+    level: LogLevel = LogLevel.INFO,
+    log_format: LogFormat = LogFormat.CONSOLE,
     log_file: Optional[str] = None,
-    json_format: Optional[bool] = None,
-    include_timestamp: Optional[bool] = None,
-    include_context: Optional[bool] = None,
+    enable_file_logging: bool = False,
+    use_color: bool = True,
 ) -> logging.Logger:
     """
-    Configure the root logger with appropriate handlers and formatters.
+    Configure the root logger for the Agent Engine.
 
-    This function should be called once at application startup. It configures
-    the root 'agent_engine' logger with:
-    - A console handler (stdout)
-    - An optional file handler
-    - Appropriate log level
-    - Structured or human-readable formatting
+    This function should be called once at application startup to initialize
+    the logging system. It configures:
+    - The root logger with the specified level
+    - A console handler with the specified format
+    - An optional file handler if file logging is enabled
 
     Args:
-        level: Log level string (DEBUG, INFO, WARNING, ERROR, CRITICAL).
-               If None, uses the value from global config.
-        log_file: Path to log file. If None, only console output.
-        json_format: Whether to use JSON format. If None, uses config value.
-        include_timestamp: Whether to include timestamps. If None, uses config.
-        include_context: Whether to include context. If None, uses config.
+        level: The minimum log level to capture.
+        log_format: The output format (JSON or console).
+        log_file: Path to the log file (required if enable_file_logging is True).
+        enable_file_logging: Whether to enable file logging.
+        use_color: Whether to use ANSI colors in console output.
 
     Returns:
-        logging.Logger: The configured root 'agent_engine' logger.
+        The configured root logger instance.
+
+    Raises:
+        ValueError: If enable_file_logging is True but no log_file is provided.
+
+    Example:
+        >>> logger = setup_logging(level=LogLevel.DEBUG, log_format=LogFormat.JSON)
+        >>> logger.info("Application started")
     """
-    # Get config values as defaults
-    config = get_config()
-    log_config = config.get_logging_config()
+    if enable_file_logging and not log_file:
+        raise ValueError(
+            "log_file must be specified when enable_file_logging is True"
+        )
 
-    if level is None:
-        level = log_config.level.value
-    if json_format is None:
-        json_format = log_config.json_format
-    if include_timestamp is None:
-        include_timestamp = log_config.include_timestamp
-    if include_context is None:
-        include_context = log_config.include_context
+    # Get the root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level.value)
 
-    # Get or create the agent_engine root logger
-    logger = logging.getLogger("agent_engine")
-    logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+    # Clear existing handlers to avoid duplicate logs
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
 
-    # Remove any existing handlers to avoid duplicates on re-initialization
-    for handler in logger.handlers[:]:
-        logger.removeHandler(handler)
-
-    # Create formatter
-    formatter = StructuredFormatter(
-        json_format=json_format,
-        include_timestamp=include_timestamp,
-        include_context=include_context,
-    )
-
-    # Console handler
+    # Create and configure the console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logger.level)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    console_handler.setLevel(level.value)
 
-    # Optional file handler
-    if log_file:
+    if log_format == LogFormat.JSON:
+        console_handler.setFormatter(JSONFormatter())
+    else:
+        console_handler.setFormatter(ConsoleFormatter(use_color=use_color))
+
+    root_logger.addHandler(console_handler)
+
+    # Create and configure the file handler if enabled
+    if enable_file_logging and log_file:
         file_handler = logging.FileHandler(log_file, encoding="utf-8")
-        file_handler.setLevel(logger.level)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+        file_handler.setLevel(level.value)
 
-    # Prevent propagation to root logger to avoid duplicate messages
-    logger.propagate = False
+        if log_format == LogFormat.JSON:
+            file_handler.setFormatter(JSONFormatter())
+        else:
+            file_handler.setFormatter(ConsoleFormatter(use_color=False))
 
-    return logger
+        root_logger.addHandler(file_handler)
+
+    return root_logger
 
 
 def get_logger(name: str) -> logging.Logger:
     """
-    Get a named logger for the agent engine.
+    Get a configured logger instance for the given name.
 
-    This is the primary way to obtain loggers throughout the codebase.
-    It returns a child logger of the 'agent_engine' root logger, ensuring
-    consistent configuration.
+    This is a convenience wrapper around logging.getLogger() that ensures
+    the logger is properly configured. If logging has not been set up yet,
+    it will use the default configuration.
 
     Args:
-        name: The logger name, typically __name__ of the calling module.
+        name: The name of the logger (typically __name__).
 
     Returns:
-        logging.Logger: A configured logger instance.
-    """
-    # Ensure the root agent_engine logger is configured
-    root_logger = logging.getLogger("agent_engine")
-    if not root_logger.handlers:
-        # If not yet configured, set up with defaults
-        setup_logging()
+        A configured logging.Logger instance.
 
-    return root_logger.getChild(name)
+    Example:
+        >>> logger = get_logger(__name__)
+        >>> logger.info("Hello from my module")
+    """
+    logger = logging.getLogger(name)
+
+    # If no handlers are configured, add a basic one to avoid "No handlers" warning
+    if not logger.handlers and not logging.getLogger().handlers:
+        basic_handler = logging.StreamHandler(sys.stdout)
+        basic_handler.setFormatter(
+            ConsoleFormatter(use_color=True)
+        )
+        logger.addHandler(basic_handler)
+        logger.setLevel(LogLevel.INFO.value)
+
+    return logger

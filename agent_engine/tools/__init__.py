@@ -2,16 +2,11 @@
 agent_engine.tools
 ==================
 
-Tool registry and execution framework for the Agent Engine.
+Tool registry and execution framework.
 
-This module provides the infrastructure for defining, registering, and
-executing tools that agents can invoke during their workflow.
-
-Planned components:
-- ToolRegistry: Central registry for all available tools
-- Tool: Base class for tool definitions
-- ToolExecutor: Executes tools with proper error handling
-- ToolSchema: JSON Schema generation for tool definitions
+This module will contain:
+- Base tool class with schema definition
+- Tool registry for dynamic tool discovery
+- Tool execution engine with error handling
+- Built-in tools (file I/O, web search, code execution)
 """
-
-__all__ = []

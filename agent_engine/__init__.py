@@ -17,11 +17,12 @@ Modules:
 __version__ = "0.1.0"
 __author__ = "Agent Engine Team"
 
-from agent_engine.core.config import EngineConfig
+from agent_engine.core.config import EngineConfig, get_config
 from agent_engine.core.logging import setup_logging, get_logger
 
 __all__ = [
     "EngineConfig",
+    "get_config",
     "setup_logging",
     "get_logger",
     "__version__",

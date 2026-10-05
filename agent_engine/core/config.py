@@ -50,6 +50,13 @@ class LogLevel(str, Enum):
     CRITICAL = "CRITICAL"
 
 
+class LogFormat(str, Enum):
+    """Supported log output formats."""
+
+    JSON = "json"
+    CONSOLE = "console"
+
+
 class LLMConfig(BaseModel):
     """
     Configuration for the LLM client.
@@ -170,26 +177,54 @@ class EngineConfig(BaseModel):
     )
 
 
+class LoggingConfig(BaseModel):
+    """
+    Configuration for the logging system.
+
+    Attributes:
+        level: The minimum log level to capture.
+        format: Output format (json or console).
+        log_file: Optional path to a log file.
+        enable_file_logging: Whether to write logs to a file.
+    """
+
+    level: LogLevel = Field(
+        default=LogLevel.INFO,
+        description="Minimum log level to capture",
+    )
+    format: LogFormat = Field(
+        default=LogFormat.CONSOLE,
+        description="Output format (json or console)",
+    )
+    log_file: Optional[str] = Field(
+        default=None,
+        description="Optional path to a log file",
+    )
+    enable_file_logging: bool = Field(
+        default=False,
+        description="Whether to write logs to a file",
+    )
+
+
 class MemoryConfig(BaseModel):
     """
     Configuration for the dynamic memory system.
 
     Attributes:
-        backend: Memory backend type (in-memory, redis, sqlite).
-        max_entries: Maximum number of memory entries to retain.
+        backend: Memory backend type (in_memory, redis, sqlite).
+        max_entries: Maximum number of entries to store.
         ttl_seconds: Time-to-live for memory entries in seconds.
-        compression_enabled: Whether memory compression is enabled.
-        compression_threshold: Threshold for triggering compression.
+        compression_enabled: Whether to enable memory compression.
     """
 
     backend: str = Field(
-        default="in-memory",
+        default="in_memory",
         description="Memory backend type",
     )
     max_entries: int = Field(
         default=1000,
         ge=1,
-        description="Maximum number of memory entries to retain",
+        description="Maximum number of entries to store",
     )
     ttl_seconds: Optional[int] = Field(
         default=None,
@@ -198,46 +233,7 @@ class MemoryConfig(BaseModel):
     )
     compression_enabled: bool = Field(
         default=False,
-        description="Whether memory compression is enabled",
-    )
-    compression_threshold: int = Field(
-        default=500,
-        ge=1,
-        description="Threshold for triggering compression",
-    )
-
-
-class LoggingConfig(BaseModel):
-    """
-    Configuration for the logging system.
-
-    Attributes:
-        level: Log level.
-        log_file: Path to the log file (None for stdout only).
-        json_format: Whether to use JSON structured logging.
-        include_timestamp: Whether to include timestamps in logs.
-        include_context: Whether to include context in logs.
-    """
-
-    level: LogLevel = Field(
-        default=LogLevel.INFO,
-        description="Log level",
-    )
-    log_file: Optional[str] = Field(
-        default=None,
-        description="Path to the log file",
-    )
-    json_format: bool = Field(
-        default=False,
-        description="Whether to use JSON structured logging",
-    )
-    include_timestamp: bool = Field(
-        default=True,
-        description="Whether to include timestamps in logs",
-    )
-    include_context: bool = Field(
-        default=True,
-        description="Whether to include context in logs",
+        description="Whether to enable memory compression",
     )
 
 
@@ -245,15 +241,24 @@ class AgentEngineSettings(BaseSettings):
     """
     Top-level settings for the Agent Engine.
 
-    This class uses Pydantic Settings to automatically load configuration
-    from environment variables and .env files. Environment variables are
-    mapped to fields using the prefix 'AGENT_ENGINE_'.
+    This class uses Pydantic Settings to load configuration from:
+    1. Environment variables (prefixed with AGENT_ENGINE_)
+    2. .env file in the current directory
+    3. Default values defined in the model
 
-    Example:
-        AGENT_ENGINE_LLM_PROVIDER=groq
-        AGENT_ENGINE_LLM_MODEL=llama-3.3-70b-versatile
-        AGENT_ENGINE_LLM_API_KEY=gsk_xxx
-        AGENT_ENGINE_ENGINE_MAX_ITERATIONS=15
+    Environment variable mapping:
+        AGENT_ENGINE_LLM_PROVIDER -> llm.provider
+        AGENT_ENGINE_LLM_MODEL -> llm.model
+        AGENT_ENGINE_LLM_API_KEY -> llm.api_key
+        AGENT_ENGINE_ENGINE_MAX_ITERATIONS -> engine.max_iterations
+        AGENT_ENGINE_LOG_LEVEL -> logging.level
+        etc.
+
+    Attributes:
+        llm: LLM client configuration.
+        engine: Core engine configuration.
+        logging: Logging system configuration.
+        memory: Memory system configuration.
     """
 
     model_config = SettingsConfigDict(
@@ -264,213 +269,154 @@ class AgentEngineSettings(BaseSettings):
         extra="ignore",
     )
 
-    # LLM Configuration
-    llm_provider: LLMProvider = Field(
-        default=LLMProvider.GROQ,
-        description="LLM provider",
+    llm: LLMConfig = Field(
+        default_factory=LLMConfig,
+        description="LLM client configuration",
     )
-    llm_model: str = Field(
-        default="llama-3.3-70b-versatile",
-        description="LLM model name",
+    engine: EngineConfig = Field(
+        default_factory=EngineConfig,
+        description="Core engine configuration",
     )
-    llm_api_key: str = Field(
-        default="",
-        description="LLM API key",
+    logging: LoggingConfig = Field(
+        default_factory=LoggingConfig,
+        description="Logging system configuration",
     )
-    llm_base_url: str = Field(
-        default="https://api.groq.com/openai/v1",
-        description="LLM base URL",
-    )
-    llm_temperature: float = Field(
-        default=0.7,
-        ge=0.0,
-        le=2.0,
-        description="LLM temperature",
-    )
-    llm_max_tokens: int = Field(
-        default=4096,
-        ge=1,
-        description="LLM max tokens",
-    )
-    llm_timeout: float = Field(
-        default=60.0,
-        ge=1.0,
-        description="LLM timeout in seconds",
-    )
-    llm_max_retries: int = Field(
-        default=3,
-        ge=0,
-        description="LLM max retries",
+    memory: MemoryConfig = Field(
+        default_factory=MemoryConfig,
+        description="Memory system configuration",
     )
 
-    # Engine Configuration
-    engine_max_iterations: int = Field(
-        default=10,
-        ge=1,
-        description="Max agent iterations",
-    )
-    engine_max_tool_calls: int = Field(
-        default=5,
-        ge=1,
-        description="Max tool calls per iteration",
-    )
-    engine_reflection_enabled: bool = Field(
-        default=True,
-        description="Enable self-reflection",
-    )
-    engine_reflection_interval: int = Field(
-        default=3,
-        ge=1,
-        description="Reflection interval",
-    )
-    engine_memory_window: int = Field(
-        default=20,
-        ge=1,
-        description="Memory window size",
-    )
-    engine_parallel_agents: int = Field(
-        default=1,
-        ge=1,
-        description="Max parallel agents",
-    )
-    engine_task_timeout: float = Field(
-        default=300.0,
-        ge=1.0,
-        description="Task timeout in seconds",
-    )
-
-    # Memory Configuration
-    memory_backend: str = Field(
-        default="in-memory",
-        description="Memory backend",
-    )
-    memory_max_entries: int = Field(
-        default=1000,
-        ge=1,
-        description="Max memory entries",
-    )
-    memory_ttl_seconds: Optional[int] = Field(
-        default=None,
-        ge=1,
-        description="Memory TTL in seconds",
-    )
-    memory_compression_enabled: bool = Field(
-        default=False,
-        description="Enable memory compression",
-    )
-    memory_compression_threshold: int = Field(
-        default=500,
-        ge=1,
-        description="Compression threshold",
-    )
-
-    # Logging Configuration
-    log_level: LogLevel = Field(
-        default=LogLevel.INFO,
-        description="Log level",
-    )
-    log_file: Optional[str] = Field(
-        default=None,
-        description="Log file path",
-    )
-    log_json_format: bool = Field(
-        default=False,
-        description="Use JSON log format",
-    )
-    log_include_timestamp: bool = Field(
-        default=True,
-        description="Include timestamps in logs",
-    )
-    log_include_context: bool = Field(
-        default=True,
-        description="Include context in logs",
-    )
-
-    def get_llm_config(self) -> LLMConfig:
+    @field_validator("llm", mode="before")
+    @classmethod
+    def parse_llm_config(cls, v: object) -> object:
         """
-        Build and return an LLMConfig instance from flat settings.
+        Parse LLM config from environment variables.
+
+        Handles the case where individual LLM fields are set via env vars
+        like AGENT_ENGINE_LLM_PROVIDER, AGENT_ENGINE_LLM_MODEL, etc.
+        """
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, LLMConfig):
+            return v
+        # If it's a string, try to parse as JSON
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return {}
+        return {}
+
+    @field_validator("engine", mode="before")
+    @classmethod
+    def parse_engine_config(cls, v: object) -> object:
+        """Parse engine config from environment variables."""
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, EngineConfig):
+            return v
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return {}
+        return {}
+
+    @field_validator("logging", mode="before")
+    @classmethod
+    def parse_logging_config(cls, v: object) -> object:
+        """Parse logging config from environment variables."""
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, LoggingConfig):
+            return v
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return {}
+        return {}
+
+    @field_validator("memory", mode="before")
+    @classmethod
+    def parse_memory_config(cls, v: object) -> object:
+        """Parse memory config from environment variables."""
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, MemoryConfig):
+            return v
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return {}
+        return {}
+
+    def validate_api_key_for_provider(self) -> None:
+        """
+        Validate that an API key is provided for cloud-based LLM providers.
+
+        Raises:
+            ValueError: If a cloud provider is selected but no API key is provided.
+        """
+        cloud_providers = {
+            LLMProvider.OPENAI,
+            LLMProvider.GROQ,
+            LLMProvider.DEEPSEEK,
+            LLMProvider.ANTHROPIC,
+        }
+        if self.llm.provider in cloud_providers and not self.llm.api_key:
+            raise ValueError(
+                f"API key is required for provider '{self.llm.provider.value}'. "
+                f"Set AGENT_ENGINE_LLM_API_KEY environment variable."
+            )
+
+    def to_dict(self) -> dict:
+        """
+        Serialize the entire configuration to a dictionary.
 
         Returns:
-            LLMConfig: Configured LLM settings.
+            A dictionary representation of the configuration.
         """
-        return LLMConfig(
-            provider=self.llm_provider,
-            model=self.llm_model,
-            api_key=self.llm_api_key,
-            base_url=self.llm_base_url,
-            temperature=self.llm_temperature,
-            max_tokens=self.llm_max_tokens,
-            timeout=self.llm_timeout,
-            max_retries=self.llm_max_retries,
-        )
-
-    def get_engine_config(self) -> EngineConfig:
-        """
-        Build and return an EngineConfig instance from flat settings.
-
-        Returns:
-            EngineConfig: Configured engine settings.
-        """
-        return EngineConfig(
-            max_iterations=self.engine_max_iterations,
-            max_tool_calls=self.engine_max_tool_calls,
-            reflection_enabled=self.engine_reflection_enabled,
-            reflection_interval=self.engine_reflection_interval,
-            memory_window=self.engine_memory_window,
-            parallel_agents=self.engine_parallel_agents,
-            task_timeout=self.engine_task_timeout,
-        )
-
-    def get_memory_config(self) -> MemoryConfig:
-        """
-        Build and return a MemoryConfig instance from flat settings.
-
-        Returns:
-            MemoryConfig: Configured memory settings.
-        """
-        return MemoryConfig(
-            backend=self.memory_backend,
-            max_entries=self.memory_max_entries,
-            ttl_seconds=self.memory_ttl_seconds,
-            compression_enabled=self.memory_compression_enabled,
-            compression_threshold=self.memory_compression_threshold,
-        )
-
-    def get_logging_config(self) -> LoggingConfig:
-        """
-        Build and return a LoggingConfig instance from flat settings.
-
-        Returns:
-            LoggingConfig: Configured logging settings.
-        """
-        return LoggingConfig(
-            level=self.log_level,
-            log_file=self.log_file,
-            json_format=self.log_json_format,
-            include_timestamp=self.log_include_timestamp,
-            include_context=self.log_include_context,
-        )
+        return {
+            "llm": self.llm.model_dump(),
+            "engine": self.engine.model_dump(),
+            "logging": self.logging.model_dump(),
+            "memory": self.memory.model_dump(),
+        }
 
 
 @lru_cache(maxsize=1)
 def get_config() -> AgentEngineSettings:
     """
-    Get the singleton instance of AgentEngineSettings.
+    Get the singleton instance of the agent engine configuration.
 
-    This function uses lru_cache to ensure only one instance is created
-    and reused throughout the application lifecycle.
+    This function uses lru_cache to ensure that only one instance of the
+    configuration is created and reused throughout the application lifecycle.
 
     Returns:
-        AgentEngineSettings: The global configuration instance.
+        The singleton AgentEngineSettings instance.
+
+    Example:
+        >>> config = get_config()
+        >>> print(config.llm.provider)
+        LLMProvider.GROQ
     """
-    return AgentEngineSettings()
+    settings = AgentEngineSettings()
+    # Validate that API key is present for cloud providers
+    settings.validate_api_key_for_provider()
+    return settings
 
 
 def reset_config() -> None:
     """
     Reset the cached configuration instance.
 
-    This is primarily useful for testing, allowing tests to create
-    fresh configuration instances with different environment variables.
+    This is primarily useful for testing purposes where you need to
+    reload configuration with different environment variables.
     """
     get_config.cache_clear()
