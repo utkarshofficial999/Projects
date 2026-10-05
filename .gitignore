@@ -34,6 +34,6 @@ wheels/
 *.swo
 
 # Project agent state
-state/
+# state/ is tracked in git so GitHub Actions remembers progress across runs!
 logs/
 target_workspace/

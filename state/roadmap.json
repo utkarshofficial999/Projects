@@ -1,0 +1,184 @@
+{
+  "topic": "Autonomous Multi-Agent Workflow Engine with Tool Calling, Dynamic Memory and Self-Reflection",
+  "created_at": "2026-10-05T09:41:30.740354+00:00",
+  "total_steps": 10,
+  "steps": [
+    {
+      "step_number": 1,
+      "id": "step_01",
+      "phase": "Architecture & Repository Scaffolding",
+      "title": "Repository Scaffolding, Package Setup, and Core Configuration",
+      "description": "Initialize the Python project structure using pyproject.toml. Create the agent_engine package hierarchy. Implement a robust configuration system using Pydantic Settings to manage environment variables, API keys, and engine parameters. Set up a centralized logging configuration with structured logging support. Establish the base directory structure for core, tools, memory, and agents modules.",
+      "target_files": [
+        "pyproject.toml",
+        "agent_engine/__init__.py",
+        "agent_engine/core/__init__.py",
+        "agent_engine/core/config.py",
+        "agent_engine/core/logging.py",
+        "README.md"
+      ],
+      "status": "completed",
+      "completed_at": "2026-10-05T09:45:15.635651+00:00",
+      "commit_hash": "e583f4553d0eb34e4f90709899c4a73bb22597e3"
+    },
+    {
+      "step_number": 2,
+      "id": "step_02",
+      "phase": "Core Models, Schemas & Protocols",
+      "title": "Pydantic Schemas, Message Protocols, and Agent Abstractions",
+      "description": "Define the core data structures using Pydantic. Create schemas for AgentState, Message, ToolCall, ToolResult, and WorkflowContext. Define abstract base classes (ABCs) for BaseAgent, BaseTool, and BaseMemory. Establish the protocol for inter-agent communication and the standard interface for LLM interactions. Ensure all models are serializable for persistence and debugging.",
+      "target_files": [
+        "agent_engine/core/schemas.py",
+        "agent_engine/core/protocols.py",
+        "agent_engine/core/exceptions.py",
+        "agent_engine/core/types.py"
+      ],
+      "status": "pending",
+      "completed_at": null,
+      "commit_hash": null
+    },
+    {
+      "step_number": 3,
+      "id": "step_03",
+      "phase": "Core Reasoning Engine / Execution Loop",
+      "title": "ReAct Loop Implementation and LLM Client Abstraction",
+      "description": "Implement the core reasoning engine supporting the ReAct (Reasoning + Acting) pattern. Create an abstract LLM client interface and a concrete implementation for a major provider (e.g., OpenAI or Anthropic). Build the execution loop that parses LLM outputs into Thought, Action, and Observation steps. Handle token limits and basic error retries within the loop. Ensure the engine is stateless regarding the LLM but stateful regarding the workflow context.",
+      "target_files": [
+        "agent_engine/core/llm_client.py",
+        "agent_engine/core/react_engine.py",
+        "agent_engine/core/parser.py"
+      ],
+      "status": "pending",
+      "completed_at": null,
+      "commit_hash": null
+    },
+    {
+      "step_number": 4,
+      "id": "step_04",
+      "phase": "Tool System & Registry",
+      "title": "Dynamic Tool Registry, Validation, and Execution Sandbox",
+      "description": "Develop the tool management system. Create a ToolRegistry that allows dynamic registration of tools via decorators or class inheritance. Implement input validation using Pydantic models for each tool's arguments. Build a secure execution sandbox that handles tool invocation, captures stdout/stderr, and manages timeouts. Implement error recovery mechanisms that feed tool errors back into the agent's context for self-correction.",
+      "target_files": [
+        "agent_engine/tools/__init__.py",
+        "agent_engine/tools/registry.py",
+        "agent_engine/tools/base_tool.py",
+        "agent_engine/tools/sandbox.py",
+        "agent_engine/tools/builtin/search_tool.py",
+        "agent_engine/tools/builtin/calculator_tool.py"
+      ],
+      "status": "pending",
+      "completed_at": null,
+      "commit_hash": null
+    },
+    {
+      "step_number": 5,
+      "id": "step_05",
+      "phase": "Memory & Context Management",
+      "title": "Short-Term Buffer and Long-Term Vector/SQLite Memory",
+      "description": "Implement the memory subsystem. Create a ShortTermMemory class that manages the sliding window of recent interactions. Implement a LongTermMemory interface with a SQLite-based implementation for structured state and a vector store interface (e.g., using FAISS or ChromaDB) for semantic recall. Build a ContextManager that intelligently compresses or summarizes older messages to fit within the LLM's context window while retaining critical information.",
+      "target_files": [
+        "agent_engine/memory/__init__.py",
+        "agent_engine/memory/base_memory.py",
+        "agent_engine/memory/short_term.py",
+        "agent_engine/memory/long_term_sqlite.py",
+        "agent_engine/memory/vector_store.py",
+        "agent_engine/memory/context_manager.py"
+      ],
+      "status": "pending",
+      "completed_at": null,
+      "commit_hash": null
+    },
+    {
+      "step_number": 6,
+      "id": "step_06",
+      "phase": "Agent Collaboration & Multi-Agent Communication",
+      "title": "Message Bus, Supervisor Pattern, and Agent Handoffs",
+      "description": "Build the multi-agent orchestration layer. Implement a MessageBus for asynchronous communication between agents. Create a SupervisorAgent that delegates tasks to specialized sub-agents (e.g., Researcher, Coder, Reviewer). Implement handoff logic where agents can transfer control to other agents based on task requirements. Ensure thread-safe state sharing and proper lifecycle management for concurrent agents.",
+      "target_files": [
+        "agent_engine/agents/__init__.py",
+        "agent_engine/agents/base_agent.py",
+        "agent_engine/agents/supervisor.py",
+        "agent_engine/agents/message_bus.py",
+        "agent_engine/agents/specialized/researcher.py",
+        "agent_engine/agents/specialized/coder.py"
+      ],
+      "status": "pending",
+      "completed_at": null,
+      "commit_hash": null
+    },
+    {
+      "step_number": 7,
+      "id": "step_07",
+      "phase": "Self-Reflection, Evaluation & Error Healing",
+      "title": "Reflection Loop, Critic Agent, and Automatic Retry Logic",
+      "description": "Implement the self-reflection mechanism. Create a CriticAgent that evaluates the output of other agents against the original goal. Build a reflection loop where the main agent reviews its own actions and identifies mistakes. Implement automatic error healing: if a tool fails or the critic rejects the output, the system generates a corrective prompt and retries the step with updated context. Track success rates and failure patterns for adaptive behavior.",
+      "target_files": [
+        "agent_engine/reflection/__init__.py",
+        "agent_engine/reflection/critic.py",
+        "agent_engine/reflection/evaluator.py",
+        "agent_engine/reflection/healer.py"
+      ],
+      "status": "pending",
+      "completed_at": null,
+      "commit_hash": null
+    },
+    {
+      "step_number": 8,
+      "id": "step_08",
+      "phase": "Production Interface",
+      "title": "FastAPI Server, CLI Interface, and Demo Scripts",
+      "description": "Create the user-facing interfaces. Build a FastAPI server that exposes endpoints for starting workflows, streaming agent thoughts, and retrieving results. Implement a rich CLI using Typer or Click for local execution and debugging. Create example scripts in the examples/ directory that demonstrate single-agent tasks, multi-agent collaboration, and tool usage. Ensure the API supports WebSocket connections for real-time updates.",
+      "target_files": [
+        "agent_engine/api/__init__.py",
+        "agent_engine/api/server.py",
+        "agent_engine/api/routes.py",
+        "agent_engine/cli/__init__.py",
+        "agent_engine/cli/main.py",
+        "examples/single_agent_demo.py",
+        "examples/multi_agent_workflow.py"
+      ],
+      "status": "pending",
+      "completed_at": null,
+      "commit_hash": null
+    },
+    {
+      "step_number": 9,
+      "id": "step_09",
+      "phase": "Automated Unit & Integration Tests",
+      "title": "Pytest Suite for Core Logic, Tools, and Memory",
+      "description": "Develop a comprehensive test suite using pytest. Write unit tests for the ReAct parser, tool registry, and memory components. Create integration tests that simulate full agent workflows with mocked LLM responses. Test the message bus for concurrency issues. Verify that the reflection loop correctly triggers retries on failure. Ensure high code coverage for the core engine and tool execution paths.",
+      "target_files": [
+        "tests/__init__.py",
+        "tests/conftest.py",
+        "tests/test_config.py",
+        "tests/test_react_engine.py",
+        "tests/test_tool_registry.py",
+        "tests/test_memory.py",
+        "tests/test_multi_agent.py",
+        "tests/test_reflection.py"
+      ],
+      "status": "pending",
+      "completed_at": null,
+      "commit_hash": null
+    },
+    {
+      "step_number": 10,
+      "id": "step_10",
+      "phase": "Documentation, Examples, Architecture Diagrams & Tutorials",
+      "title": "Comprehensive Docs, Architecture Diagrams, and Onboarding Guide",
+      "description": "Finalize the documentation. Write detailed API documentation using Sphinx or MkDocs. Create architecture diagrams (using Mermaid or PlantUML) illustrating the agent workflow, memory flow, and communication patterns. Develop a tutorial series in the docs/ folder covering installation, basic usage, custom tool creation, and advanced multi-agent setup. Polish the README with badges, quick start guide, and feature list.",
+      "target_files": [
+        "docs/index.md",
+        "docs/architecture.md",
+        "docs/tutorials/01_getting_started.md",
+        "docs/tutorials/02_custom_tools.md",
+        "docs/tutorials/03_multi_agent.md",
+        "docs/diagrams/system_architecture.mmd",
+        "README.md"
+      ],
+      "status": "pending",
+      "completed_at": null,
+      "commit_hash": null
+    }
+  ]
+}
