@@ -1,0 +1,61 @@
+name: "GitAgentic Daily AI Commits"
+
+on:
+  schedule:
+    # Runs daily at a scheduled base time (e.g. 06:00 UTC)
+    # The workflow includes a randomized delay script so commits happen at varying times
+    - cron: "0 6 * * *"
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  run-daily-step:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Random Time Jitter (Vary commit time naturally)
+        if: github.event_name == 'schedule'
+        run: |
+          # Sleep between 0 and 120 minutes (or up to 4 hours) to randomize commit time
+          RANDOM_MINUTES=$((RANDOM % 180))
+          echo "Sleeping for $RANDOM_MINUTES minutes to vary commit time..."
+          sleep $((RANDOM_MINUTES * 60))
+
+      - name: Configure Git Identity
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+      - name: Run Next Milestone
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL || 'https://api.groq.com/openai/v1' }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL || 'llama-3.3-70b-versatile' }}
+          PROJECT_TOPIC: ${{ secrets.PROJECT_TOPIC || 'Autonomous Multi-Agent Workflow Engine with Tool Calling, Dynamic Memory and Self-Reflection' }}
+          TARGET_PROJECT_PATH: "."
+          GIT_AUTO_PUSH: "false"
+        run: |
+          python main.py --run-once
+
+      - name: Push Changes
+        run: |
+          git push origin HEAD:${{ github.ref_name }}
