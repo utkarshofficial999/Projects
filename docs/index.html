@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgentEngine | Live Daily AI Commits & Roadmap Tracker</title>
+  <meta name="description" content="Live automated dashboard tracking daily commits, milestones, and autonomous engineering progress for AgentEngine.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0d14;
+      --bg-secondary: #101522;
+      --bg-card: rgba(18, 24, 38, 0.7);
+      --bg-card-hover: rgba(26, 34, 54, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(99, 102, 241, 0.3);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-cyan: #06b6d4;
+      --accent-violet: #8b5cf6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --glow-cyan: 0 0 25px rgba(6, 182, 212, 0.25);
+      --glow-violet: 0 0 25px rgba(139, 92, 246, 0.25);
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 25%, rgba(6, 182, 212, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 45%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 32px;
+    }
+
+    @media (min-width: 768px) {
+      header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: var(--glow-cyan);
+    }
+
+    .brand-text h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #34d399;
+    }
+
+    .status-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-cyan);
+      box-shadow: var(--glow-cyan);
+      transform: translateY(-1px);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin-bottom: 36px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-violet), var(--accent-cyan));
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .stat-meta {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-top: 8px;
+    }
+
+    /* Progress bar */
+    .progress-section {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 36px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-violet), var(--accent-cyan));
+      border-radius: 9999px;
+      transition: width 1s ease-in-out;
+      box-shadow: var(--glow-cyan);
+    }
+
+    /* Content Layout */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    @media (min-width: 992px) {
+      .dashboard-layout {
+        grid-template-columns: 1.35fr 1fr;
+      }
+    }
+
+    /* Cards */
+    .panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 26px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Commit Feed */
+    .commit-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .commit-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .commit-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateX(4px);
+    }
+
+    .commit-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .commit-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge-feat { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-docs { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .badge-chore { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
+    .badge-merge { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+    .commit-sha {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--accent-cyan);
+      text-decoration: none;
+      background: rgba(6, 182, 212, 0.1);
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+
+    .commit-sha:hover {
+      background: rgba(6, 182, 212, 0.25);
+    }
+
+    .commit-msg {
+      font-size: 14.5px;
+      font-weight: 500;
+      color: #ffffff;
+      word-break: break-word;
+    }
+
+    .commit-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-dim);
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .commit-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .author-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+    }
+
+    /* Roadmap Timeline */
+    .roadmap-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .milestone-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+    }
+
+    .milestone-item.completed {
+      border-color: rgba(16, 185, 129, 0.3);
+      background: rgba(16, 185, 129, 0.03);
+    }
+
+    .milestone-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .milestone-item.completed .milestone-num {
+      background: var(--accent-emerald);
+      color: #000;
+    }
+
+    .milestone-body {
+      flex: 1;
+    }
+
+    .milestone-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .milestone-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .milestone-phase {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .milestone-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-color);
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    footer a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-top: 2px solid var(--accent-cyan);
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-left">
+        <div class="brand-icon">🤖</div>
+        <div class="brand-text">
+          <h1>AgentEngine Live Dashboard</h1>
+          <p>Autonomous Daily CI/CD & Commit Activity Tracker</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-badge">
+          <div class="status-pulse"></div>
+          <span>Autonomous 24/7 Agent Active</span>
+        </div>
+        <button id="refreshBtn" class="btn" onclick="fetchLiveUpdates()">
+          <span id="refreshIcon">↻</span> Refresh
+        </button>
+        <a href="https://github.com/utkarshofficial999/Projects" target="_blank" class="btn">
+          View on GitHub ↗
+        </a>
+      </div>
+    </header>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Project Status</div>
+        <div class="stat-value" id="statusText">Active</div>
+        <div class="stat-meta">Next commit scheduled in ~24h</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Milestones Progress</div>
+        <div class="stat-value" id="milestonesProgress">1 / 10</div>
+        <div class="stat-meta" id="milestonesPercent">10% Completed</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Total Commits</div>
+        <div class="stat-value" id="totalCommitsCount">--</div>
+        <div class="stat-meta" id="latestCommitTime">Fetching latest...</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Execution Engine</div>
+        <div class="stat-value" style="font-size: 22px;">Qwen 27B / Groq</div>
+        <div class="stat-meta">GitHub Actions Cloud Runner</div>
+      </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="progress-section">
+      <div class="progress-header">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 600;">Overall Roadmap Completion</h3>
+          <p style="font-size: 13px; color: var(--text-dim);" id="activeMilestoneText">Active: Milestone #2 (Pydantic Schemas & Protocols)</p>
+        </div>
+        <span id="progressBarLabel" style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan);">10%</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBarFill" style="width: 10%;"></div>
+      </div>
+    </div>
+
+    <!-- Dashboard Content Layout -->
+    <div class="dashboard-layout">
+      <!-- Left Column: Live Commit Feed -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>📅</span> Daily Commit Activity
+          </div>
+          <span style="font-size: 12px; color: var(--text-dim);" id="commitCountSub">Loading...</span>
+        </div>
+        <div class="commit-timeline" id="commitFeed">
+          <div style="text-align: center; padding: 40px; color: var(--text-dim);">
+            <div class="spinner"></div> Loading live commit stream from GitHub...
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Engineering Roadmap -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>🗺️</span> 10-Day Roadmap Tracker
+          </div>
+          <span style="font-size: 12px; color: var(--text-dim);">10 Milestones</span>
+        </div>
+        <div class="roadmap-list" id="roadmapList">
+          <!-- Dynamic Roadmap Items injected here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>Powered by <strong>GitAgentic</strong> &bull; Commits automatically generated by Autonomous AI on <a href="https://github.com/utkarshofficial999/Projects" target="_blank">GitHub Actions</a></p>
+      <p style="margin-top: 6px; font-size: 12px; color: #475569;">Live URL automatically hosted on GitHub Pages &bull; Profile: <a href="https://github.com/utkarshofficial999" target="_blank">@utkarshofficial999</a></p>
+    </footer>
+  </div>
+
+  <script>
+    const REPO_OWNER = "utkarshofficial999";
+    const REPO_NAME = "Projects";
+    const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits?per_page=20`;
+
+    // Static default roadmap definition for instant display
+    const ROADMAP = [
+      { num: 1, title: "Repository Scaffolding & Core Config", phase: "Architecture", desc: "Base package setup, Pydantic settings, structlog logging", status: "completed" },
+      { num: 2, title: "Pydantic Schemas & Agent Protocols", phase: "Core Protocols", desc: "Agent message contracts, state definitions, abstractions", status: "pending" },
+      { num: 3, title: "ReAct Loop & Universal LLM Client", phase: "Execution Loop", desc: "Thought-action-observation cycles, LLM adapters", status: "pending" },
+      { num: 4, title: "Dynamic Tool Registry & Sandboxing", phase: "Tool System", desc: "Tool schema registration, argument validation, safety sandbox", status: "pending" },
+      { num: 5, title: "Short & Long-Term Vector Memory", phase: "Context Management", desc: "Sliding window buffer, SQLite & Vector state persistence", status: "pending" },
+      { num: 6, title: "Multi-Agent Bus & Supervisor", phase: "Collaboration", desc: "Supervisor routing, agent handoffs, async event bus", status: "pending" },
+      { num: 7, title: "Self-Reflection & Critic Evaluator", phase: "Self-Reflection", desc: "Critic review loop, hallucination detector, auto-healing", status: "pending" },
+      { num: 8, title: "FastAPI REST Server & CLI REPL", phase: "Production API", desc: "Async web endpoints, interactive rich terminal interface", status: "pending" },
+      { num: 9, title: "Automated Pytest Suite", phase: "QA & Testing", desc: "Comprehensive tests for reasoning loop, memory, tools", status: "pending" },
+      { num: 10, title: "Documentation, Diagrams & Tutorials", phase: "Release", desc: "Architecture diagrams, quickstart tutorials, and benchmarks", status: "pending" }
+    ];
+
+    function renderRoadmap() {
+      const container = document.getElementById("roadmapList");
+      container.innerHTML = ROADMAP.map(item => `
+        <div class="milestone-item ${item.status}">
+          <div class="milestone-num">${item.status === 'completed' ? '✔' : item.num}</div>
+          <div class="milestone-body">
+            <div class="milestone-title-row">
+              <span class="milestone-title">${item.title}</span>
+              <span class="milestone-phase">${item.phase}</span>
+            </div>
+            <div class="milestone-desc">${item.desc}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function formatRelativeTime(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffSec = Math.floor((now - date) / 1000);
+
+      if (diffSec < 60) return "Just now";
+      if (diffSec < 3600) return `${Math.floor(diffSec / 60)} minutes ago`;
+      if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} hours ago`;
+      return `${Math.floor(diffSec / 86400)} days ago`;
+    }
+
+    function formatTimeIST(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    function getCommitBadge(msg) {
+      const m = msg.toLowerCase();
+      if (m.startsWith("feat")) return '<span class="commit-badge badge-feat">FEATURE</span>';
+      if (m.startsWith("docs")) return '<span class="commit-badge badge-docs">DOCS</span>';
+      if (m.startsWith("chore")) return '<span class="commit-badge badge-chore">CHORE</span>';
+      if (m.startsWith("merge")) return '<span class="commit-badge badge-merge">MERGE</span>';
+      return '<span class="commit-badge badge-chore">COMMIT</span>';
+    }
+
+    async function fetchLiveUpdates() {
+      const refreshBtn = document.getElementById("refreshBtn");
+      refreshBtn.disabled = true;
+      refreshBtn.innerHTML = '<span class="spinner"></span> Refreshing...';
+
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error("GitHub API limit reached or network error");
+        const commits = await res.json();
+
+        // Update Total Commits Stat
+        document.getElementById("totalCommitsCount").textContent = commits.length + "+";
+        
+        if (commits.length > 0) {
+          const latest = commits[0];
+          const latestDate = latest.commit.author.date;
+          document.getElementById("latestCommitTime").textContent = `Last commit ${formatRelativeTime(latestDate)}`;
+        }
+
+        document.getElementById("commitCountSub").textContent = `${commits.length} recent commits recorded`;
+
+        // Render Commit Feed
+        const feed = document.getElementById("commitFeed");
+        feed.innerHTML = commits.map(c => {
+          const shaShort = c.sha.substring(0, 7);
+          const rawMsg = c.commit.message.split("\n")[0];
+          const authorName = c.commit.author.name || "Agent";
+          const avatarUrl = c.author ? c.author.avatar_url : "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
+          const date = c.commit.author.date;
+          const relativeTime = formatRelativeTime(date);
+          const localTime = formatTimeIST(date);
+          const badge = getCommitBadge(rawMsg);
+
+          return `
+            <div class="commit-card">
+              <div class="commit-top">
+                <div>${badge}</div>
+                <a href="${c.html_url}" target="_blank" class="commit-sha">${shaShort} ↗</a>
+              </div>
+              <div class="commit-msg">${escapeHtml(rawMsg)}</div>
+              <div class="commit-footer">
+                <div class="commit-author">
+                  <img src="${avatarUrl}" alt="${authorName}" class="author-avatar" onerror="this.src='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'">
+                  <span>${authorName}</span>
+                </div>
+                <span>${relativeTime} (${localTime})</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+      } catch (err) {
+        console.warn("API Fetch error, displaying fallback:", err);
+        document.getElementById("commitFeed").innerHTML = `
+          <div style="padding: 20px; text-align: center; color: var(--text-dim); background: rgba(255,255,255,0.02); border-radius: 8px;">
+            <p style="color: #f87171; margin-bottom: 8px;">Unable to fetch direct GitHub API (rate-limited).</p>
+            <p style="font-size: 13px;">View real-time commit stream directly at: <br>
+            <a href="https://github.com/utkarshofficial999/Projects/commits/main" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">github.com/utkarshofficial999/Projects/commits</a></p>
+          </div>
+        `;
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = '<span>↻</span> Refresh';
+      }
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Initialize
+    renderRoadmap();
+    fetchLiveUpdates();
+
+    // Auto-refresh every 60 seconds
+    setInterval(fetchLiveUpdates, 60000);
+  </script>
+</body>
+</html>
