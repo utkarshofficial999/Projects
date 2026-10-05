@@ -1,131 +1,147 @@
-# 🤖 GitAgentic: Autonomous Daily AI Engineer & GitHub Committer
+# 🧠 AgentEngine: Autonomous Multi-Agent Workflow Engine
 
-> An autonomous agent that builds, tests, documents, and regularly commits an entire Agentic AI project to your GitHub profile, executing discrete engineering milestones at randomized times every 24 hours.
+> A modular, production-ready Multi-Agent AI System featuring dynamic tool calling, short/long-term memory persistence, self-reflection critic loops, and distributed agent collaboration.
 
----
-
-## ✨ Features
-
-- 🧠 **Autonomous Engineering Lifecycle**: Given a high-level topic (e.g. *"Multi-Agent Workflow Engine with Self-Reflection"*), the agent architecturally plans a 15–25 step sequential engineering roadmap.
-- ⏰ **Randomized 24-Hour Schedule**: Runs every ~24 hours with configurable random jitter (e.g., between 18h and 28h) so your daily GitHub commit streak appears natural at varying times of day.
-- ⚡ **Multi-LLM Compatible**: Built on an OpenAI-compatible interface:
-  - **Groq** (`llama-3.3-70b-versatile` / `llama-3.1-8b-instant`) — ultra-fast & free tier friendly!
-  - **Ollama** (`qwen2.5-coder`, `llama3.2`) — 100% free, local, private, no API key needed.
-  - **OpenAI** (`gpt-4o`, `gpt-4o-mini`).
-  - **DeepSeek** (`deepseek-chat`).
-- 🛠️ **Production-Ready Code**: Generates full working code, unit tests (`pytest`), docstrings, and clean architecture without hollow `# TODO` placeholders.
-- 📝 **Conventional Git Commits**: Stages code and generates conventional commit messages (e.g. `feat(engine): add dynamic tool registry and schema generator`).
-- ☁️ **Dual Deployment Options**:
-  - **Local Daemon**: Runs on your machine with live countdown and status tables.
-  - **GitHub Actions**: Runs 24/7 in the cloud without needing your PC turned on.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://www.python.org/)
+[![Autonomous CI/CD](https://img.shields.io/badge/Agentic%20CI%2FCD-Active%20Daily-success.svg)](https://github.com/utkarshofficial999/Projects/actions)
 
 ---
 
-## 🚀 Quick Start (Local Setup)
+## 📖 Project Overview
 
-### 1. Clone & Install
+**AgentEngine** is a modern, extensible agentic framework built in Python to orchestrate autonomous, goal-directed AI agents. Unlike standard single-prompt LLM wrappers, AgentEngine provides an enterprise-ready architecture for multi-agent reasoning, dynamic tool execution, conversational and semantic vector memory, self-correcting critique loops, and dual interface capabilities (CLI & FastAPI).
+
+---
+
+## 🏛️ System Architecture
+
+```mermaid
+graph TD
+    User([User / API Request]) --> Supervisor[Multi-Agent Supervisor / Router]
+    
+    subgraph AgentEngine Core Runtime
+        Supervisor --> AgentA[Task Worker Agent]
+        Supervisor --> AgentB[Research & Analysis Agent]
+        Supervisor --> AgentC[Critic / Evaluator Agent]
+        
+        AgentA <--> ReActLoop[ReAct Reasoning Loop]
+        AgentB <--> ReActLoop
+        
+        ReActLoop <--> ToolRegistry[Dynamic Tool Registry & Sandbox]
+        ReActLoop <--> MemoryManager[Memory Subsystem]
+        
+        MemoryManager --> ShortTerm[Short-Term Context Buffer]
+        MemoryManager --> LongTerm[Long-Term SQLite / Vector Store]
+        
+        AgentC --> SelfReflection[Self-Reflection & Healing Loop]
+        SelfReflection -.->|Refined Plan / Feedback| Supervisor
+    end
+    
+    subgraph Delivery & Exposure
+        Supervisor --> CLI[Interactive Rich CLI]
+        Supervisor --> API[FastAPI Async REST Endpoints]
+    end
+```
+
+---
+
+## ✨ Key Features
+
+- 🔄 **ReAct Execution Engine**: Autonomous thought-action-observation cycles that reason step-by-step before answering.
+- 🛠️ **Dynamic Tool Calling & Sandboxing**: Type-safe tool definitions using Pydantic schemas with automatic parameter validation and execution guardrails.
+- 💾 **Dual-Tier Memory Management**:
+  - **Short-Term Context Buffer**: Sliding window conversational memory preserving token budgets.
+  - **Long-Term Vector / SQLite Store**: Persistent semantic search and state retrieval across sessions.
+- 👥 **Multi-Agent Collaboration**:
+  - Supervisor pattern orchestrating specialized worker agents.
+  - Asynchronous message bus with structured agent handoffs.
+- 🧐 **Self-Reflection & Error Healing**: Integrated critic agent that evaluates intermediate agent outputs and triggers self-correction loops when errors or hallucinations occur.
+- 🌐 **Production Interfaces**: Out-of-the-box support for both an interactive terminal CLI (`agent-engine cli`) and a high-performance asynchronous FastAPI server.
+
+---
+
+## 📂 Repository Structure
+
+```
+├── agent_engine/               # Core AgentEngine Package
+│   ├── __init__.py             # Package exports & version
+│   ├── cli/                    # Interactive CLI runner
+│   │   ├── __init__.py
+│   │   └── main.py             # CLI commands and REPL
+│   ├── core/                   # Architecture, config & logging
+│   │   ├── __init__.py
+│   │   ├── config.py           # Pydantic v2 settings & environment engine
+│   │   └── logging.py          # Structured JSON/console logging with structlog
+│   ├── agents/                 # Agent implementations & supervisor logic
+│   ├── tools/                  # Dynamic tool registry & sandboxed tools
+│   └── memory/                 # Short-term buffers and long-term vector state
+├── tests/                      # Automated Pytest suite
+├── docs/                       # Architecture specifications & tutorials
+├── state/                      # Roadmap state & milestone tracking
+│   └── roadmap.json
+├── .github/workflows/          # 24/7 Autonomous Daily CI/CD Commit Workflow
+│   └── daily_agent.yml
+├── main.py                     # Agentic project engine runner
+└── pyproject.toml              # Modern Python build & dependency specification
+```
+
+---
+
+## 🗺️ Engineering Roadmap & Milestone Status
+
+This project is iteratively constructed across **10 engineering milestones**, progressing continuously:
+
+| # | Milestone | Phase | Status |
+|:---:|---|---|:---:|
+| **1** | **Repository Scaffolding, Package Setup & Core Config** | Architecture & Config | **✔ Completed** |
+| **2** | **Pydantic Schemas, Message Protocols & Agent Abstractions** | Core Protocols | ⏳ In Progress |
+| **3** | **ReAct Loop Implementation & Universal LLM Abstraction** | Execution Engine | ⏳ Upcoming |
+| **4** | **Dynamic Tool Registry, Validation & Execution Sandbox** | Tool System | ⏳ Upcoming |
+| **5** | **Short-Term Buffer & Long-Term Vector/SQLite Memory** | Context Management | ⏳ Upcoming |
+| **6** | **Message Bus, Supervisor Pattern & Agent Handoffs** | Multi-Agent Systems | ⏳ Upcoming |
+| **7** | **Reflection Loop, Critic Agent & Automatic Retry Logic** | Self-Reflection | ⏳ Upcoming |
+| **8** | **FastAPI Server, Interactive CLI Interface & Demo Scripts** | Production Interface | ⏳ Upcoming |
+| **9** | **Automated Pytest Suite for Core Logic, Tools & Memory** | Quality Assurance | ⏳ Upcoming |
+| **10** | **Comprehensive Docs, Architecture Diagrams & Tutorials** | Release & Documentation | ⏳ Upcoming |
+
+---
+
+## ⚡ Quick Start & Installation
+
+### 1. Prerequisites
+- Python 3.10+
+- Git
+
+### 2. Installation
 ```bash
-git clone <your-repo-url>
-cd "github aagetn"
+git clone https://github.com/utkarshofficial999/Projects.git
+cd Projects
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment (`.env`)
-Copy the example environment template:
+### 3. Running the CLI
 ```bash
-cp .env.example .env
-```
-Edit `.env` with your API key and desired project topic:
-```env
-# Example for Groq
-LLM_BASE_URL="https://api.groq.com/openai/v1"
-LLM_API_KEY="gsk_your_groq_api_key_here"
-LLM_MODEL="llama-3.3-70b-versatile"
-
-# Your Agentic AI project topic
-PROJECT_TOPIC="Autonomous Multi-Agent Workflow Engine with Tool Calling, Dynamic Memory and Self-Reflection"
-
-# Target workspace to commit to
-TARGET_PROJECT_PATH="./target_project"
-GIT_AUTO_PUSH=true
-```
-
-*(If using **Ollama**, simply set `LLM_BASE_URL="http://localhost:11434/v1"` and `LLM_MODEL="qwen2.5-coder:7b"` with `LLM_API_KEY="ollama"`!)*
-
----
-
-## 💻 CLI Commands
-
-### 1. Preview the Roadmap
-See the agent's architectural plan before executing any code:
-```bash
-python main.py --init-roadmap
-```
-
-### 2. Run a Single Milestone (Immediate Run)
-Runs the next pending milestone, creates files, writes tests, commits, and pushes:
-```bash
-python main.py --run-once
-```
-
-### 3. Check Current Status & Progress
-View completion percentage, table of completed and pending milestones, and last commit:
-```bash
-python main.py --status
-```
-
-### 4. Start the 24-Hour Randomized Daemon
-Starts the continuous loop on your machine. It executes a step, then randomizes the wait time between 18 and 28 hours before the next commit:
-```bash
-python main.py --start-daemon
+python -m agent_engine.cli.main --help
 ```
 
 ---
 
-## ☁️ Deploying on GitHub Actions (Run 24/7 Without Keeping PC On)
+## 🤖 Autonomous Daily Engineering System
 
-The included `.github/workflows/daily_agent.yml` lets GitHub automatically run the agent once a day.
+This repository is powered by **GitAgentic**, an autonomous CI/CD software engineer that builds, verifies, and commits features every ~24 hours:
 
-### Setup Instructions:
-1. Push this repository to your GitHub account:
-   ```bash
-   git add .
-   git commit -m "feat: initialize GitAgentic system"
-   git remote add origin https://github.com/<your-username>/<your-repo-name>.git
-   git push -u origin main
-   ```
-2. In your GitHub repository:
-   - Go to **Settings** > **Secrets and variables** > **Actions**.
-   - Add the following Repository Secrets:
-     - `LLM_API_KEY`: Your Groq / OpenAI API key.
-     - *(Optional)* `LLM_BASE_URL`: (Defaults to `https://api.groq.com/openai/v1`).
-     - *(Optional)* `LLM_MODEL`: (Defaults to `llama-3.3-70b-versatile`).
-     - *(Optional)* `PROJECT_TOPIC`: Custom topic if different from default.
-3. Under **Settings** > **Actions** > **General** > **Workflow permissions**:
-   - Select **Read and write permissions** (so the action can push commits).
-4. GitHub Actions will now trigger daily on schedule with randomized jitter, committing new features under your GitHub account!
+- **Automated Cloud Commits**: Handled by GitHub Actions ([`.github/workflows/daily_agent.yml`](.github/workflows/daily_agent.yml)).
+- **Inspect Current Progress**:
+  ```bash
+  python main.py --status
+  ```
+- **Run the Local Background Daemon**:
+  ```bash
+  python main.py --start-daemon
+  ```
 
 ---
 
-## 📂 Project Architecture
-
-```
-├── .github/workflows/
-│   └── daily_agent.yml       # Cloud 24-hr scheduled GitHub Action
-├── src/
-│   ├── config.py             # Settings, environment, and validation
-│   ├── llm_client.py         # Universal OpenAI-compatible LLM client
-│   ├── roadmap_engine.py     # Generates 15-25 step architecture & tracks progress
-│   ├── coder_agent.py        # Generates production code, tests, and commit messages
-│   ├── git_committer.py      # Git staging, status, commit, and remote push
-│   └── scheduler.py          # Randomized 24-hour daemon runner
-├── target_project/           # Dedicated directory where the AI builds the project
-├── main.py                   # Central CLI interface
-├── requirements.txt          # Python dependencies
-└── .env.example              # Configuration template
-```
-
----
-
-## 🛡️ License
-MIT License. Built for autonomous AI exploration and open-source contributions.
+## 📄 License
+This project is open-source under the [MIT License](LICENSE).
