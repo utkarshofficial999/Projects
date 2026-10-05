@@ -10,7 +10,7 @@ from rich.table import Table
 from src.config import AppConfig
 
 logger = logging.getLogger("GitAgentic.Scheduler")
-console = Console()
+console = Console(legacy_windows=False)
 
 class RandomizedScheduler:
     """Manages randomized daily execution cycles."""

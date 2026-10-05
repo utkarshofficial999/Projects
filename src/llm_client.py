@@ -26,7 +26,7 @@ class LLMClient:
         self,
         messages: List[Dict[str, str]],
         temperature: float = 0.2,
-        max_tokens: int = 4096,
+        max_tokens: int = 8192,
         retries: int = 3,
     ) -> str:
         """Call the LLM with retry mechanism."""

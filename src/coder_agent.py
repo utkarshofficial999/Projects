@@ -63,24 +63,31 @@ Produce complete, runnable, production-quality code for this milestone.
 Do NOT write placeholder code or `# TODO implement later`. Write full, working implementations.
 Include unit tests with `pytest` for the modules being implemented or modified.
 
-Format your response as strict JSON:
-{{
-  "commit_message": "feat(component): concise conventional commit description",
-  "summary": "Brief 1-2 sentence developer summary of changes made",
-  "files": [
-    {{
-      "path": "relative/path/to/file.py",
-      "content": "Full file content string"
-    }}
-  ]
-}}
+Format your response using structured tags:
+
+<commit_message>feat(component): concise conventional commit description</commit_message>
+<summary>Brief 1-2 sentence developer summary of changes made</summary>
+
+<file path="relative/path/to/file.py">
+# Full code here
+</file>
+
+<file path="tests/test_file.py">
+# Test code here
+</file>
 """
 
-        response = self.llm.generate_json(system_prompt, user_prompt, temperature=0.2)
-        
-        commit_message = response.get("commit_message", f"feat: implement {step.title}")
-        summary = response.get("summary", "")
-        files_data = response.get("files", [])
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        raw_response = self.llm.chat(messages, temperature=0.2, max_tokens=8192)
+        parsed = self._parse_code_response(raw_response, step.title)
+
+        commit_message = parsed["commit_message"]
+        summary = parsed["summary"]
+        files_data = parsed["files"]
 
         written_paths: List[str] = []
         for file_entry in files_data:
@@ -93,7 +100,7 @@ Format your response as strict JSON:
             full_path.parent.mkdir(parents=True, exist_ok=True)
             with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
-            
+
             written_paths.append(rel_path)
             logger.info(f"Wrote file: {rel_path} ({len(content)} chars)")
 
@@ -103,6 +110,52 @@ Format your response as strict JSON:
             files_written=written_paths,
             summary=summary,
         )
+
+    def _parse_code_response(self, text: str, default_title: str) -> Dict[str, Any]:
+        """Parse structured tags, with fallback to JSON or markdown blocks."""
+        import re
+
+        # 1. Try Tag-based parsing: <commit_message>, <summary>, <file path="...">
+        commit_match = re.search(r"<commit_message>(.*?)</commit_message>", text, re.DOTALL | re.IGNORECASE)
+        commit_message = commit_match.group(1).strip() if commit_match else f"feat: implement {default_title}"
+
+        summary_match = re.search(r"<summary>(.*?)</summary>", text, re.DOTALL | re.IGNORECASE)
+        summary = summary_match.group(1).strip() if summary_match else ""
+
+        files = []
+        file_pattern = re.compile(r'<file\s+path=["\']([^"\']+)["\']>(.*?)</file>', re.DOTALL | re.IGNORECASE)
+        for match in file_pattern.finditer(text):
+            p = match.group(1).strip()
+            c = match.group(2)
+            if c.startswith("\n"):
+                c = c[1:]
+            files.append({"path": p, "content": c})
+
+        if files:
+            return {"commit_message": commit_message, "summary": summary, "files": files}
+
+        # 2. Try JSON fallback
+        try:
+            cleaned = self.llm._clean_json_string(text)
+            data = json.loads(cleaned)
+            if isinstance(data, dict) and "files" in data:
+                return {
+                    "commit_message": data.get("commit_message", commit_message),
+                    "summary": data.get("summary", summary),
+                    "files": data.get("files", []),
+                }
+        except Exception:
+            pass
+
+        # 3. Fallback: markdown blocks with file path headers (e.g. ```python file=... or ### file: ...)
+        md_pattern = re.compile(r'(?:```[a-zA-Z0-9_-]*\s+(?:file=|path=)?([^\n]+)|###\s+(?:File:\s*)?([^\n]+))\n(.*?)(?:```|$)', re.DOTALL)
+        for match in md_pattern.finditer(text):
+            p = (match.group(1) or match.group(2) or "").strip().strip("`*#")
+            c = match.group(3)
+            if p and ("." in p or "/" in p or "\\" in p):
+                files.append({"path": p, "content": c})
+
+        return {"commit_message": commit_message, "summary": summary, "files": files}
 
     def _get_directory_tree(self, path: Path, max_depth: int = 3, current_depth: int = 0) -> str:
         """Create a compact text representation of existing files."""

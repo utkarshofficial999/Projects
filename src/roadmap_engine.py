@@ -83,6 +83,12 @@ Phases should cover:
 9. Automated Unit & Integration Tests (pytest test suite)
 10. Documentation, Examples, Architecture Diagrams & Tutorials
 
+IMPORTANT DIRECTORY CONVENTION:
+- All generated library code MUST be placed under `agent_engine/` (e.g. `agent_engine/core/...`, `agent_engine/tools/...`).
+- Tests should be in `tests/`.
+- Examples should be in `examples/`.
+- Do NOT target `src/` or `main.py` directly, as they are reserved for the runner.
+
 Return JSON format:
 {{
   "topic": "{self.config.project_topic}",
@@ -93,7 +99,7 @@ Return JSON format:
       "phase": "Architecture & Repository Scaffolding",
       "title": "Short title (e.g. Repository Scaffolding, Package Setup, and Core Config)",
       "description": "Specific implementation details and requirements for this step.",
-      "target_files": ["src/core/config.py", "pyproject.toml", "README.md"]
+      "target_files": ["agent_engine/core/config.py", "pyproject.toml", "examples/quickstart.py"]
     }}
   ]
 }}
