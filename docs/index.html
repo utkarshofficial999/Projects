@@ -606,35 +606,66 @@
     const REPO_OWNER = "utkarshofficial999";
     const REPO_NAME = "Projects";
     const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits?per_page=20`;
+    const ROADMAP_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/state/roadmap.json`;
 
-    // Static default roadmap definition for instant display
-    const ROADMAP = [
-      { num: 1, title: "Repository Scaffolding & Core Config", phase: "Architecture", desc: "Base package setup, Pydantic settings, structlog logging", status: "completed" },
-      { num: 2, title: "Pydantic Schemas & Agent Protocols", phase: "Core Protocols", desc: "Agent message contracts, state definitions, abstractions", status: "pending" },
-      { num: 3, title: "ReAct Loop & Universal LLM Client", phase: "Execution Loop", desc: "Thought-action-observation cycles, LLM adapters", status: "pending" },
-      { num: 4, title: "Dynamic Tool Registry & Sandboxing", phase: "Tool System", desc: "Tool schema registration, argument validation, safety sandbox", status: "pending" },
-      { num: 5, title: "Short & Long-Term Vector Memory", phase: "Context Management", desc: "Sliding window buffer, SQLite & Vector state persistence", status: "pending" },
-      { num: 6, title: "Multi-Agent Bus & Supervisor", phase: "Collaboration", desc: "Supervisor routing, agent handoffs, async event bus", status: "pending" },
-      { num: 7, title: "Self-Reflection & Critic Evaluator", phase: "Self-Reflection", desc: "Critic review loop, hallucination detector, auto-healing", status: "pending" },
-      { num: 8, title: "FastAPI REST Server & CLI REPL", phase: "Production API", desc: "Async web endpoints, interactive rich terminal interface", status: "pending" },
-      { num: 9, title: "Automated Pytest Suite", phase: "QA & Testing", desc: "Comprehensive tests for reasoning loop, memory, tools", status: "pending" },
-      { num: 10, title: "Documentation, Diagrams & Tutorials", phase: "Release", desc: "Architecture diagrams, quickstart tutorials, and benchmarks", status: "pending" }
+    // Static default roadmap definition for instant fallback
+    let ROADMAP = [
+      { step_number: 1, title: "Repository Scaffolding & Core Config", phase: "Architecture", description: "Base package setup, Pydantic settings, structlog logging", status: "completed" },
+      { step_number: 2, title: "Pydantic Schemas & Agent Protocols", phase: "Core Protocols", description: "Agent message contracts, state definitions, abstractions", status: "pending" },
+      { step_number: 3, title: "ReAct Loop & Universal LLM Client", phase: "Execution Loop", description: "Thought-action-observation cycles, LLM adapters", status: "pending" },
+      { step_number: 4, title: "Dynamic Tool Registry & Sandboxing", phase: "Tool System", description: "Tool schema registration, argument validation, safety sandbox", status: "pending" },
+      { step_number: 5, title: "Short & Long-Term Vector Memory", phase: "Context Management", description: "Sliding window buffer, SQLite & Vector state persistence", status: "pending" },
+      { step_number: 6, title: "Multi-Agent Bus & Supervisor", phase: "Collaboration", description: "Supervisor routing, agent handoffs, async event bus", status: "pending" },
+      { step_number: 7, title: "Self-Reflection & Critic Evaluator", phase: "Self-Reflection", description: "Critic review loop, hallucination detector, auto-healing", status: "pending" },
+      { step_number: 8, title: "FastAPI REST Server & CLI REPL", phase: "Production API", description: "Async web endpoints, interactive rich terminal interface", status: "pending" },
+      { step_number: 9, title: "Automated Pytest Suite", phase: "QA & Testing", description: "Comprehensive tests for reasoning loop, memory, tools", status: "pending" },
+      { step_number: 10, title: "Documentation, Diagrams & Tutorials", phase: "Release", description: "Architecture diagrams, quickstart tutorials, and benchmarks", status: "pending" }
     ];
 
-    function renderRoadmap() {
+    function renderRoadmap(items = ROADMAP) {
       const container = document.getElementById("roadmapList");
-      container.innerHTML = ROADMAP.map(item => `
+      container.innerHTML = items.map(item => `
         <div class="milestone-item ${item.status}">
-          <div class="milestone-num">${item.status === 'completed' ? '✔' : item.num}</div>
+          <div class="milestone-num">${item.status === 'completed' ? '✔' : (item.step_number || item.num)}</div>
           <div class="milestone-body">
             <div class="milestone-title-row">
               <span class="milestone-title">${item.title}</span>
               <span class="milestone-phase">${item.phase}</span>
             </div>
-            <div class="milestone-desc">${item.desc}</div>
+            <div class="milestone-desc">${item.description || item.desc}</div>
           </div>
         </div>
       `).join("");
+    }
+
+    async function fetchRoadmapState() {
+      try {
+        const res = await fetch(ROADMAP_URL);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.steps && data.steps.length > 0) {
+          ROADMAP = data.steps;
+          const completedCount = ROADMAP.filter(s => s.status === 'completed').length;
+          const totalCount = ROADMAP.length;
+          const pct = Math.round((completedCount / totalCount) * 100);
+
+          document.getElementById("milestonesProgress").textContent = `${completedCount} / ${totalCount}`;
+          document.getElementById("milestonesPercent").textContent = `${pct}% Completed`;
+          document.getElementById("progressBarFill").style.width = `${pct}%`;
+          document.getElementById("progressBarLabel").textContent = `${pct}%`;
+
+          const activeStep = ROADMAP.find(s => s.status === 'pending');
+          if (activeStep) {
+            document.getElementById("activeMilestoneText").textContent = `Active: Milestone #${activeStep.step_number} (${activeStep.title})`;
+          } else {
+            document.getElementById("activeMilestoneText").textContent = "All milestones completed! 🎉";
+          }
+
+          renderRoadmap(ROADMAP);
+        }
+      } catch (err) {
+        console.warn("Could not load remote roadmap.json:", err);
+      }
     }
 
     function formatRelativeTime(dateString) {
@@ -734,10 +765,14 @@
 
     // Initialize
     renderRoadmap();
+    fetchRoadmapState();
     fetchLiveUpdates();
 
     // Auto-refresh every 60 seconds
-    setInterval(fetchLiveUpdates, 60000);
+    setInterval(() => {
+      fetchRoadmapState();
+      fetchLiveUpdates();
+    }, 60000);
   </script>
 </body>
 </html>

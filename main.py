@@ -119,11 +119,13 @@ def execute_single_step(config) -> bool:
     for f in result.files_written:
         console.print(f"  • [blue]{f}[/blue]")
 
-    # 2. Git stage, commit and push
-    commit_hash = git.stage_and_commit(result.commit_message)
+    # 2. Mark step as completed in state BEFORE committing so state/roadmap.json is included in the commit
+    roadmap_eng.mark_step_completed(next_step.id)
 
-    # 3. Mark step as completed in state
-    roadmap_eng.mark_step_completed(next_step.id, commit_hash=commit_hash)
+    # 3. Git stage, commit and push
+    commit_hash = git.stage_and_commit(result.commit_message)
+    if commit_hash:
+        roadmap_eng.mark_step_completed(next_step.id, commit_hash=commit_hash)
 
     console.print(
         f"[bold green]✔ Milestone #{next_step.step_number} successfully finished and committed![/bold green]\n"
@@ -132,6 +134,12 @@ def execute_single_step(config) -> bool:
 
 def main():
     parser = argparse.ArgumentParser(description="GitAgentic: Autonomous GitHub Project Agent")
+    parser.add_argument(
+        "command",
+        nargs="?",
+        choices=["daemon", "run", "status", "init", "reset"],
+        help="Command to run: 'daemon', 'run', 'status', 'init', or 'reset'",
+    )
     parser.add_argument(
         "--run-once",
         action="store_true",
@@ -161,14 +169,14 @@ def main():
     args = parser.parse_args()
     config = get_config()
 
-    if args.reset:
+    if args.command == "reset" or args.reset:
         llm = LLMClient(config)
         eng = RoadmapEngine(config, llm)
         eng.reset()
         console.print("[bold yellow]State reset successfully.[/bold yellow]")
         return
 
-    if args.init_roadmap:
+    if args.command == "init" or args.init_roadmap:
         print_banner(config)
         llm = LLMClient(config)
         eng = RoadmapEngine(config, llm)
@@ -176,23 +184,23 @@ def main():
         show_status(config)
         return
 
-    if args.status:
+    if args.command == "status" or args.status:
         show_status(config)
         return
 
-    if args.run_once:
+    if args.command == "run" or args.run_once:
         print_banner(config)
         execute_single_step(config)
         return
 
-    if args.start_daemon:
+    if args.command == "daemon" or args.start_daemon:
         print_banner(config)
         config.validate_keys()
         scheduler = RandomizedScheduler(config)
         scheduler.run_daemon(lambda: execute_single_step(config))
         return
 
-    # If no flags passed, default to showing help and status
+    # If no flags or commands passed, default to showing help and status
     parser.print_help()
     console.print("\n")
     show_status(config)
