@@ -27,12 +27,19 @@ from src.scheduler import RandomizedScheduler
 
 console = Console()
 
+from pathlib import Path
+
+LOGS_DIR = Path(__file__).resolve().parent / "logs"
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+log_file = LOGS_DIR / "git_agentic.log"
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
+        logging.FileHandler(str(log_file), encoding="utf-8"),
     ],
 )
 # Silence chatty libraries
@@ -98,10 +105,12 @@ def execute_single_step(config) -> bool:
     """Execute a single step from the roadmap, commit, and push."""
     config.validate_keys()
 
+    git = GitCommitter(config)
+    git.pull()
+
     llm = LLMClient(config)
     roadmap_eng = RoadmapEngine(config, llm)
     coder = CoderAgent(config, llm)
-    git = GitCommitter(config)
 
     next_step = roadmap_eng.get_next_pending_step()
     if not next_step:

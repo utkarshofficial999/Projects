@@ -101,6 +101,19 @@ class GitCommitter:
         logger.info("Successfully pushed commits to GitHub!")
         return True
 
+    def pull(self) -> bool:
+        """Pull latest changes from remote repository with rebase."""
+        code, remotes, _ = self._run_git(["remote"])
+        if self.config.git_remote not in remotes.split():
+            return False
+        logger.info(f"Syncing with {self.config.git_remote}/{self.config.git_branch}...")
+        code, out, err = self._run_git(["pull", "--rebase", self.config.git_remote, self.config.git_branch])
+        if code != 0:
+            logger.warning(f"Git pull rebase warning: {err}")
+            self._run_git(["rebase", "--abort"])
+            return False
+        return True
+
     def get_last_commit(self) -> Optional[str]:
         """Retrieve latest commit summary."""
         code, out, _ = self._run_git(["log", "-1", "--oneline"])
