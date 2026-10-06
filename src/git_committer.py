@@ -87,6 +87,9 @@ class GitCommitter:
             )
             return False
 
+        # Pull with rebase first to integrate any remote changes safely
+        self._run_git(["pull", "--rebase", self.config.git_remote, self.config.git_branch])
+
         logger.info(f"Pushing to {self.config.git_remote}/{self.config.git_branch}...")
         code, out, err = self._run_git(
             ["push", "-u", self.config.git_remote, self.config.git_branch]
