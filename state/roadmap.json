@@ -137,8 +137,8 @@
         "examples/single_agent_demo.py",
         "examples/multi_agent_workflow.py"
       ],
-      "status": "pending",
-      "completed_at": null,
+      "status": "completed",
+      "completed_at": "2026-10-10T14:01:32.829828+00:00",
       "commit_hash": null
     },
     {
