@@ -5,6 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://www.python.org/)
 [![Autonomous CI/CD](https://img.shields.io/badge/Agentic%20CI%2FCD-Active%20Daily-success.svg)](https://github.com/utkarshofficial999/Projects/actions)
+[![Documentation](https://img.shields.io/badge/Docs-MkDocs-informational)](docs/index.md)
+[![Tests](https://img.shields.io/badge/Tests-Pytest-brightgreen)](tests/)
 
 ---
 
@@ -61,6 +63,37 @@ graph TD
 
 ---
 
+## 🚀 Quick Start
+
+### 1. Installation
+
+```bash
+pip install agent-engine
+```
+
+### 2. Configuration
+
+Create a `.env` file:
+
+```env
+OPENAI_API_KEY=sk-your-key-here
+AGENT_ENGINE_LOG_LEVEL=INFO
+```
+
+### 3. Run CLI
+
+```bash
+agent-engine cli
+```
+
+### 4. Start API Server
+
+```bash
+agent-engine serve --port 8000
+```
+
+---
+
 ## 📂 Repository Structure
 
 ```
@@ -78,70 +111,40 @@ graph TD
 │   └── memory/                 # Short-term buffers and long-term vector state
 ├── tests/                      # Automated Pytest suite
 ├── docs/                       # Architecture specifications & tutorials
-├── state/                      # Roadmap state & milestone tracking
-│   └── roadmap.json
-├── .github/workflows/          # 24/7 Autonomous Daily CI/CD Commit Workflow
-│   └── daily_agent.yml
-├── main.py                     # Agentic project engine runner
-└── pyproject.toml              # Modern Python build & dependency specification
+├── state/                      # Roadmap state & memory DB
+├── logs/                       # Structured log output
+├── main.py                     # Entry point
+├── pyproject.toml              # Project metadata
+└── requirements.txt            # Dependencies
 ```
 
 ---
 
-## 🗺️ Engineering Roadmap & Milestone Status
+## 📚 Documentation
 
-This project is iteratively constructed across **10 engineering milestones**, progressing continuously:
-
-| # | Milestone | Phase | Status |
-|:---:|---|---|:---:|
-| **1** | **Repository Scaffolding, Package Setup & Core Config** | Architecture & Config | **✔ Completed** |
-| **2** | **Pydantic Schemas, Message Protocols & Agent Abstractions** | Core Protocols | ⏳ In Progress |
-| **3** | **ReAct Loop Implementation & Universal LLM Abstraction** | Execution Engine | ⏳ Upcoming |
-| **4** | **Dynamic Tool Registry, Validation & Execution Sandbox** | Tool System | ⏳ Upcoming |
-| **5** | **Short-Term Buffer & Long-Term Vector/SQLite Memory** | Context Management | ⏳ Upcoming |
-| **6** | **Message Bus, Supervisor Pattern & Agent Handoffs** | Multi-Agent Systems | ⏳ Upcoming |
-| **7** | **Reflection Loop, Critic Agent & Automatic Retry Logic** | Self-Reflection | ⏳ Upcoming |
-| **8** | **FastAPI Server, Interactive CLI Interface & Demo Scripts** | Production Interface | ⏳ Upcoming |
-| **9** | **Automated Pytest Suite for Core Logic, Tools & Memory** | Quality Assurance | ⏳ Upcoming |
-| **10** | **Comprehensive Docs, Architecture Diagrams & Tutorials** | Release & Documentation | ⏳ Upcoming |
+- [Getting Started](docs/tutorials/01_getting_started.md)
+- [System Architecture](docs/architecture.md)
+- [Custom Tool Development](docs/tutorials/02_custom_tools.md)
+- [Multi-Agent Orchestration](docs/tutorials/03_multi_agent.md)
 
 ---
 
-## ⚡ Quick Start & Installation
+## 🧪 Testing
 
-### 1. Prerequisites
-- Python 3.10+
-- Git
+Run the test suite:
 
-### 2. Installation
 ```bash
-git clone https://github.com/utkarshofficial999/Projects.git
-cd Projects
-pip install -r requirements.txt
+pytest tests/ -v
 ```
-
-### 3. Running the CLI
-```bash
-python -m agent_engine.cli.main --help
-```
-
----
-
-## 🤖 Autonomous Daily Engineering System
-
-This repository is powered by **GitAgentic**, an autonomous CI/CD software engineer that builds, verifies, and commits features every ~24 hours:
-
-- **Automated Cloud Commits**: Handled by GitHub Actions ([`.github/workflows/daily_agent.yml`](.github/workflows/daily_agent.yml)).
-- **Inspect Current Progress**:
-  ```bash
-  python main.py --status
-  ```
-- **Run the Local Background Daemon**:
-  ```bash
-  python main.py --start-daemon
-  ```
 
 ---
 
 ## 📄 License
-This project is open-source under the [MIT License](LICENSE).
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

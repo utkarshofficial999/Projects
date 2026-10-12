@@ -1,0 +1,25 @@
+graph TD
+    User([User / API Request]) --> Supervisor[Multi-Agent Supervisor / Router]
+    
+    subgraph AgentEngine Core Runtime
+        Supervisor --> AgentA[Task Worker Agent]
+        Supervisor --> AgentB[Research & Analysis Agent]
+        Supervisor --> AgentC[Critic / Evaluator Agent]
+        
+        AgentA <--> ReActLoop[ReAct Reasoning Loop]
+        AgentB <--> ReActLoop
+        
+        ReActLoop <--> ToolRegistry[Dynamic Tool Registry & Sandbox]
+        ReActLoop <--> MemoryManager[Memory Subsystem]
+        
+        MemoryManager --> ShortTerm[Short-Term Context Buffer]
+        MemoryManager --> LongTerm[Long-Term SQLite / Vector Store]
+        
+        AgentC --> SelfReflection[Self-Reflection & Healing Loop]
+        SelfReflection -.->|Refined Plan / Feedback| Supervisor
+    end
+    
+    subgraph Delivery & Exposure
+        Supervisor --> CLI[Interactive Rich CLI]
+        Supervisor --> API[FastAPI Async REST Endpoints]
+    end
